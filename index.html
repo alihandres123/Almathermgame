@@ -109,10 +109,7 @@
   <button onclick="nextDay()">⏭ Следующий день</button>
   <div class="truck-animation" id="truckAnim"></div>
   <div class="log" id="log"></div>
-  <canvas id="chartA" width="800" height="200"></canvas>
-<canvas id="chartB" width="800" height="200"></canvas>
-<canvas id="chartC" width="800" height="200"></canvas>
-
+  <canvas id="chart" width="800" height="300"></canvas>
 
 <script>
 const stock = { A: 40, B: 40, C: 40 };
@@ -138,23 +135,6 @@ const truckAnim = document.getElementById("truckAnim");
 const truckQueue = [];
 
 const chartCtx = document.getElementById('chart').getContext('2d');
-const chartA = new Chart(document.getElementById('chartA').getContext('2d'), {
-  type: 'line',
-  data: { labels: [], datasets: [{ label: 'Продажи A', data: [], borderColor: 'blue', fill: false }] },
-  options: { responsive: false, plugins: { legend: { position: 'top' }, title: { display: true, text: '📈 Продажи товара A' } } }
-});
-
-const chartB = new Chart(document.getElementById('chartB').getContext('2d'), {
-  type: 'line',
-  data: { labels: [], datasets: [{ label: 'Продажи B', data: [], borderColor: 'green', fill: false }] },
-  options: { responsive: false, plugins: { legend: { position: 'top' }, title: { display: true, text: '📈 Продажи товара B' } } }
-});
-
-const chartC = new Chart(document.getElementById('chartC').getContext('2d'), {
-  type: 'line',
-  data: { labels: [], datasets: [{ label: 'Продажи C', data: [], borderColor: 'orange', fill: false }] },
-  options: { responsive: false, plugins: { legend: { position: 'top' }, title: { display: true, text: '📈 Продажи товара C' } } }
-});
 const chartData = {
   labels: [],
   datasets: [
@@ -293,17 +273,6 @@ log(`💵 Выручка: $${revenue.toFixed(2)} | Зарплата: $${salary.t
   chartData.datasets[0].data.push(stock.A + stock.B + stock.C);
   chartData.datasets[1].data.push(totalSold);
   gameChart.update();
-  chartA.data.labels.push(day);
-chartA.data.datasets[0].data.push(soldA);
-chartA.update();
-
-chartB.data.labels.push(day);
-chartB.data.datasets[0].data.push(soldB);
-chartB.update();
-
-chartC.data.labels.push(day);
-chartC.data.datasets[0].data.push(soldC);
-chartC.update();
 
   if (budget < 0 || day >= 30) {
     log(budget < 0 ? "❌ Бюджет ушёл в минус. Игра окончена!" : "🎉 Вы успешно управляли запасами 30 дней!");
