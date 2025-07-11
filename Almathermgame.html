@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Игра по закупу ALMATHERM</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #1d439c;
+    }
+    h1 {
+      color: #e1261c;
+    }
+    button {
+      background-color: #1d439c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #15377a;
+    }
+    input[type="number"] {
+      width: 60px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 4px;
+    }
+    select {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 4px;
+    }
+    .log {
+      background: #eef0f7;
+      padding: 10px;
+      height: 200px;
+      overflow-y: scroll;
+      margin-top: 10px;
+      border-left: 4px solid #1d439c;
+    }
+    .truck-animation {
+      margin-top: 10px;
+      height: 30px;
+      background: #ddd;
+      position: relative;
+      overflow: hidden;
+    }
+    .truck {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      background: #e1261c;
+      text-align: center;
+      color: white;
+      line-height: 30px;
+      animation: drive linear forwards;
+    }
+    @keyframes drive {
+      from { left: 0; }
+      to { left: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <img src="1.png" alt="Логотип Алматерм" style="height: 80px; display: block; margin-bottom: 10px;">
+  <h1>🧾 Игра по закупу ALMATHERM</h1>
+  <p><strong>📌 Описание товаров:</strong><br>
+    A — Трубы и фитинги ППР: ходовой товар, дешёвый, стабильный спрос<br>
+    B — Смесители и комплектующие: средняя волатильность спроса<br>
+    C — Радиаторы Royal Thermo: редко продаются, дорогие, высокая прибыль</p>
+  <p id="day">День: 1</p>
+  <p id="stats" style="margin-bottom: 10px; font-size: 14px;"></p>
+
+
+  <h3>🚛 Заказ</h3>
+  <label for="vehicle">Тип машины:</label>
+  <select id="vehicle">
+    <option value="small">Малый авто (25 ед, $60, 1 день)</option>
+    <option value="gazelle">Газель (65 ед, $95, 2 дня)</option>
+    <option value="truck">Фура (120 ед, $140, 3 дня)</option>
+  </select>
+  <div>
+    Трубы ППР: <input type="number" id="orderA" value="0" min="0"> 
+    Смесители: <input type="number" id="orderB" value="0" min="0"> 
+    Радиаторы RT: <input type="number" id="orderC" value="0" min="0">
+  </div>
+  <div id="orderSummary" style="margin-top: 10px; font-size: 14px; color: #444;">
+    💡 <strong>Расчёт:</strong><br>
+    Трубы ППР: $<span id="costA">0.00</span>, 
+    Смесители: $<span id="costB">0.00</span>, 
+    Радиаторы: $<span id="costC">0.00</span><br>
+    Транспорт: $<span id="transportCost">0.00</span><br>
+    <strong>Итого:</strong> $<span id="totalOrderCost">0.00</span>
+  </div>
+  <button onclick="placeOrder()">🚚 Сделать заказ</button>
+
+  <br><br>
+  <button onclick="nextDay()">⏭ Следующий день</button>
+  <div class="truck-animation" id="truckAnim"></div>
+  <div class="log" id="log"></div>
+  <canvas id="chart" width="800" height="300"></canvas>
+
+<script>
+const stock = { A: 40, B: 40, C: 40 };
+const incoming = [[], [], [], [], [], []];
+const vehicles = {
+  small: { name: 'Малый авто', capacity: 25, cost: 60, days: 1 },
+  gazelle: { name: 'Газель', capacity: 65, cost: 95, days: 2 },
+  truck: { name: 'Фура', capacity: 120, cost: 140, days: 3 }
+};
+const purchasePrice = { A: 1.5, B: 1.8, C: 2.2 };
+
+let day = 1;
+let noOrderDays = 0;
+let totalCost = 0;
+let budget = 400;
+let salary = 10;
+let rent = 35;
+let orderPlacedToday = false;
+
+const logDiv = document.getElementById("log");
+const truckAnim = document.getElementById("truckAnim");
+const truckQueue = [];
+
+const chartCtx = document.getElementById('chart').getContext('2d');
+const chartData = {
+  labels: [],
+  datasets: [
+    { label: 'Общий остаток', data: [], borderColor: 'blue', fill: false },
+    { label: 'Продано в день', data: [], borderColor: 'green', fill: false }
+  ]
+};
+const gameChart = new Chart(chartCtx, {
+  type: 'line',
+  data: chartData,
+  options: {
+    responsive: false,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: '📊 Динамика остатков и продаж' }
+    }
+  }
+});
+
+const demandModel = {
+  A: Array.from({ length: 30 }, (_, i) => Math.random() < 0.1 ? Math.floor(Math.random() * 11 + 30) : Math.max(0, Math.floor(16 + Math.sin(i / 2.5) * 4 + (Math.random() - 0.5) * 8))),
+  B: Array.from({ length: 30 }, (_, i) => Math.random() < 0.1 ? Math.floor(Math.random() * 11 + 35) : Math.max(0, Math.floor(16 + Math.sin(i / 4) * 7 + (Math.random() - 0.5) * 12))),
+  C: Array.from({ length: 30 }, () => 0)
+};
+[2, 6, 11, 16, 20, 25, 28].forEach(d => demandModel.C[d] = Math.floor(Math.random() * 36 + 25));
+demandModel.C[Math.floor(Math.random() * 30)] = Math.floor(Math.random() * 21 + 70);
+
+const shortages = { A: 0, B: 0, C: 0 };
+const penaltyTimers = { A: 0, B: 0, C: 0 };
+
+function updateUI() {
+  document.getElementById("day").textContent = `📅 День: ${day}`;
+  document.getElementById("stats").innerHTML =
+    `📦 Остатки — A: ${stock.A} B: ${stock.B} C: ${stock.C} &nbsp;|&nbsp; 💰 Бюджет: $${budget.toFixed(2)} &nbsp;|&nbsp; 📉 Затраты: $${totalCost.toFixed(2)}`;
+}
+
+function log(msg) {
+  logDiv.innerHTML += `<div>${msg}</div>`;
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function placeOrder() {
+  if (orderPlacedToday) return alert("Вы можете делать только один заказ в день!");
+  const v = vehicles[document.getElementById("vehicle").value];
+  const A = +document.getElementById("orderA").value || 0;
+  const B = +document.getElementById("orderB").value || 0;
+  const C = +document.getElementById("orderC").value || 0;
+  const totalQty = A + B + C;
+  const purchaseCost = A * purchasePrice.A + B * purchasePrice.B + C * purchasePrice.C;
+  const totalOrderCost = v.cost + purchaseCost;
+  if (totalQty === 0 || totalQty > v.capacity) return alert("Некорректное количество!");
+  if (budget < totalOrderCost) return alert("Недостаточно средств!");
+  incoming[v.days - 1].push(["A", A], ["B", B], ["C", C]);
+  totalCost += totalOrderCost;
+  budget -= totalOrderCost;
+  queueTruckAnimation(v.days);
+  log(`📦 Заказ отправлен (${v.name}): A=${A}, B=${B}, C=${C}, Транспорт: $${v.cost}, Товары: $${purchaseCost.toFixed(2)}, Итого: $${totalOrderCost.toFixed(2)}`);
+  orderPlacedToday = true;
+  updateUI();
+}
+
+function nextDay() {
+  if (!orderPlacedToday) noOrderDays++; else noOrderDays = 0;
+  orderPlacedToday = false;
+  log(`<hr><b>📅 День ${day}</b>`);
+  const arrivals = incoming.shift();
+  arrivals.forEach(([g, q]) => { if (q > 0) { stock[g] += q; log(`🚚 Получено ${q} ед. товара ${g}`); } });
+  incoming.push([]);
+  truckQueue.forEach(t => t.days--); truckQueue.filter(t => t.days > 0).forEach(showTruck);
+
+  let soldA = 0, soldB = 0, soldC = 0, totalSold = 0, penaltyTotal = 0;
+  ["A", "B", "C"].forEach(group => {
+    let demand = demandModel[group][day - 1] || 0;
+    if (penaltyTimers[group] > 0) {
+      const red = group === 'A' ? 0.4 : group === 'B' ? 0.5 : 0.7;
+      demand = Math.floor(demand * (1 - red));
+      penaltyTimers[group]--;
+      log(`📉 Спрос на ${group} снижен на ${red * 100}%`);
+    }
+    const sold = Math.min(demand, stock[group]);
+    const shortage = demand - sold;
+    if (shortage > 0) {
+      const p = shortage * 2;
+      penaltyTotal += p;
+      log(`❗ Клиент не получил товар ${group}, репутация магазина снижена! Штраф: $${p.toFixed(2)}`);
+      shortages[group]++;
+      if (shortages[group] >= 2 && penaltyTimers[group] === 0) {
+        penaltyTimers[group] = 5;
+        log(`⚠️ Спрос на ${group} будет снижен на 5 дней`);
+        shortages[group] = 0;
+      }
+    } else {
+      shortages[group] = 0;
+    }
+    stock[group] -= sold;
+    totalSold += sold;
+    if (group === 'A') soldA = sold;
+    if (group === 'B') soldB = sold;
+    if (group === 'C') soldC = sold;
+    log(`🛒 ${group}: спрос ${demand}, продано ${sold}, дефицит ${shortage}`);
+  });
+
+  const revenue = soldA * 4.5 + soldB * 5.5 + soldC * 7;
+  const hold = storageFee();
+  budget += revenue - hold - salary - rent - penaltyTotal;
+  totalCost += hold + salary + rent + penaltyTotal;
+
+  if (day % 5 === 0) {
+    salary *= 1.15; rent *= 1.15;
+    log(`⬆️ Рост зарплаты и аренды: зарплата $${salary.toFixed(2)}, аренда $${rent.toFixed(2)}`);
+  }
+  if (day % 10 === 0) {
+    const tax = budget * 0.16;
+    budget -= tax;
+    totalCost += tax;
+    log(`💸 Налог 16%: -$${tax.toFixed(2)}`);
+  }
+
+  log(`💵 Выручка: $${revenue.toFixed(2)} | Хранение: $${hold.toFixed(2)} | Зарплата: $${salary.toFixed(2)} | Аренда: $${rent.toFixed(2)} | Штрафы: $${penaltyTotal.toFixed(2)}`);
+  chartData.labels.push(day);
+  chartData.datasets[0].data.push(stock.A + stock.B + stock.C);
+  chartData.datasets[1].data.push(totalSold);
+  gameChart.update();
+
+  if (budget < 0 || day >= 30) {
+    log(budget < 0 ? "❌ Бюджет ушёл в минус. Игра окончена!" : "🎉 Вы успешно управляли запасами 30 дней!");
+    document.querySelector("button[onclick='nextDay()']").disabled = true;
+    document.querySelector("button[onclick='placeOrder()']").disabled = true;
+  }
+  day++;
+  updateUI();
+}
+
+function storageFee() {
+  let fee = 0;
+  for (const group in stock) {
+    const qty = stock[group];
+    if (qty <= 40) fee += qty * 0.4;
+    else if (qty <= 80) fee += qty * 1.0;
+    else fee += qty * 1.8;
+    if (qty > 70) {
+      const over = qty - 70;
+      const fine = over * 1.5;
+      log(`⚠️ Переполнение ${group}: $${fine.toFixed(2)}`);
+      fee += fine;
+    }
+  }
+  return fee;
+}
+
+function queueTruckAnimation(days) {
+  truckQueue.push({ days });
+}
+function showTruck() {
+  const truck = document.createElement("div");
+  truck.className = "truck";
+  truck.textContent = "🚚";
+  truck.style.animationDuration = "1000ms";
+  truckAnim.appendChild(truck);
+  setTimeout(() => { truck.remove(); }, 1000);
+}
+
+function updateOrderSummary() {
+  const v = vehicles[document.getElementById("vehicle").value];
+  const A = +document.getElementById("orderA").value || 0;
+  const B = +document.getElementById("orderB").value || 0;
+  const C = +document.getElementById("orderC").value || 0;
+  const costA = A * purchasePrice.A;
+  const costB = B * purchasePrice.B;
+  const costC = C * purchasePrice.C;
+  const transport = v.cost;
+  const total = costA + costB + costC + transport;
+  document.getElementById("costA").textContent = costA.toFixed(2);
+  document.getElementById("costB").textContent = costB.toFixed(2);
+  document.getElementById("costC").textContent = costC.toFixed(2);
+  document.getElementById("transportCost").textContent = transport.toFixed(2);
+  document.getElementById("totalOrderCost").textContent = total.toFixed(2);
+}
+
+["orderA", "orderB", "orderC", "vehicle"].forEach(id => {
+  document.getElementById(id).addEventListener("input", updateOrderSummary);
+});
+updateOrderSummary();
+updateUI();
+</script>
+</body>
+</html>
