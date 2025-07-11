@@ -237,7 +237,7 @@ function nextDay() {
   });
 
   const revenue = soldA * 4.5 + soldB * 5.5 + soldC * 7;
-  const hold = storageFee();
+  const hold = (day % 3 === 0) ? storageFee() : 0;
   budget += revenue - hold - salary - rent - penaltyTotal;
   totalCost += hold + salary + rent + penaltyTotal;
 
@@ -252,7 +252,8 @@ function nextDay() {
     log(`💸 Налог 16%: -$${tax.toFixed(2)}`);
   }
 
-  log(`💵 Выручка: $${revenue.toFixed(2)} | Хранение: $${hold.toFixed(2)} | Зарплата: $${salary.toFixed(2)} | Аренда: $${rent.toFixed(2)} | Штрафы: $${penaltyTotal.toFixed(2)}`);
+  if (hold > 0) log(`📦 Хранение (раз в 3 дня): $${hold.toFixed(2)}`);
+log(`💵 Выручка: $${revenue.toFixed(2)} | Зарплата: $${salary.toFixed(2)} | Аренда: $${rent.toFixed(2)} | Штрафы: $${penaltyTotal.toFixed(2)}`);
   chartData.labels.push(day);
   chartData.datasets[0].data.push(stock.A + stock.B + stock.C);
   chartData.datasets[1].data.push(totalSold);
