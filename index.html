@@ -128,6 +128,7 @@ let budget = 400;
 let salary = 10;
 let rent = 35;
 let orderPlacedToday = false;
+let activeDeliveries = [];
 
 const logDiv = document.getElementById("log");
 const truckAnim = document.getElementById("truckAnim");
@@ -177,18 +178,30 @@ function log(msg) {
 
 function placeOrder() {
   if (orderPlacedToday) return alert("Вы можете делать только один заказ в день!");
-  const v = vehicles[document.getElementById("vehicle").value];
+  const selectedType = document.getElementById("vehicle").value;
+  const v = vehicles[selectedType];
+
+  if (activeDeliveries.some(d => d.type === selectedType)) {
+    alert(`${v.name} уже в пути! Подожди, пока вернётся.`);
+    return;
+  }
+
   const A = +document.getElementById("orderA").value || 0;
   const B = +document.getElementById("orderB").value || 0;
   const C = +document.getElementById("orderC").value || 0;
   const totalQty = A + B + C;
   const purchaseCost = A * purchasePrice.A + B * purchasePrice.B + C * purchasePrice.C;
   const totalOrderCost = v.cost + purchaseCost;
+
   if (totalQty === 0 || totalQty > v.capacity) return alert("Некорректное количество!");
   if (budget < totalOrderCost) return alert("Недостаточно средств!");
+
   incoming[v.days - 1].push(["A", A], ["B", B], ["C", C]);
   totalCost += totalOrderCost;
   budget -= totalOrderCost;
+
+  activeDeliveries.push({ type: selectedType, days: v.days });
+
   queueTruckAnimation(v.days);
   log(`📦 Заказ отправлен (${v.name}): A=${A}, B=${B}, C=${C}, Транспорт: $${v.cost}, Товары: $${purchaseCost.toFixed(2)}, Итого: $${totalOrderCost.toFixed(2)}`);
   orderPlacedToday = true;
@@ -203,6 +216,8 @@ function nextDay() {
   arrivals.forEach(([g, q]) => { if (q > 0) { stock[g] += q; log(`🚚 Получено ${q} ед. товара ${g}`); } });
   incoming.push([]);
   truckQueue.forEach(t => t.days--); truckQueue.filter(t => t.days > 0).forEach(showTruck);
+  activeDeliveries.forEach(d => d.days--);
+activeDeliveries = activeDeliveries.filter(d => d.days > 0);
 
   let soldA = 0, soldB = 0, soldC = 0, totalSold = 0, penaltyTotal = 0;
   ["A", "B", "C"].forEach(group => {
