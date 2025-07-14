@@ -231,7 +231,7 @@ activeDeliveries = activeDeliveries.filter(d => d.days > 0);
     const sold = Math.min(demand, stock[group]);
     const shortage = demand - sold;
     if (shortage > 0) {
-      const p = shortage * 2;
+      const p = shortage * 4;
       penaltyTotal += p;
       log(`❗ Клиент не получил товар ${group}, репутация магазина снижена! Штраф: $${p.toFixed(2)}`);
       shortages[group]++;
