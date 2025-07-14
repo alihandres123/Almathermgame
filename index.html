@@ -254,9 +254,10 @@ totalDemand += demand;
 totalSoldUnits += sold;
     const shortage = demand - sold;
     if (shortage > 0) {
-      const p = shortage * 2;
-      penaltyTotal += p;
-      log(`❗ Клиент не получил товар ${group}, репутация магазина снижена! Штраф: $${p.toFixed(2)}`);
+      const p = Math.pow(shortage, 1.7);  // прогрессивный штраф
+penaltyTotal += p;
+log(`❗ Клиент не получил товар ${group}, репутация магазина снижена! Штраф: $${p.toFixed(2)}`);
+
       shortages[group]++;
       if (shortages[group] >= 2 && penaltyTimers[group] === 0) {
         penaltyTimers[group] = 5;
