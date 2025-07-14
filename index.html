@@ -276,6 +276,7 @@ log(`❗ Клиент не получил товар ${group}, репутаци�
   });
 
   const revenue = soldA * 4.5 + soldB * 5.5 + soldC * 7;
+  totalRevenue += revenue;
   const hold = (day % 3 === 0) ? storageFee() : 0;
   budget += revenue - hold - salary - rent - penaltyTotal;
 
