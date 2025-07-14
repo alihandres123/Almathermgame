@@ -267,7 +267,7 @@ activeDeliveries = activeDeliveries.filter(d => d.days > 0);
     log(`💸 Налог 16%: -$${tax.toFixed(2)}`);
   }
 
-  if (hold > 0) log(`📦 Хранение (раз в 3 дня): $${hold.toFixed(2)}`);
+  if (hold > 0) log(`📦 Хранение (раз в 2 дня): $${hold.toFixed(2)}`);
 log(`💵 Выручка: $${revenue.toFixed(2)} | Зарплата: $${salary.toFixed(2)} | Аренда: $${rent.toFixed(2)} | Штрафы: $${penaltyTotal.toFixed(2)}`);
   chartData.labels.push(day);
   chartData.datasets[0].data.push(stock.A + stock.B + stock.C);
