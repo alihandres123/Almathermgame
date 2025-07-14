@@ -254,7 +254,7 @@ totalDemand += demand;
 totalSoldUnits += sold;
     const shortage = demand - sold;
     if (shortage > 0) {
-      const p = shortage * 3.5;  // фиксированный штраф $3 за каждую недопоставленную единицу
+      const p = shortage * 1.75;  // фиксированный штраф $3 за каждую недопоставленную единицу
 penaltyTotal += p;
 log(`❗ Клиент не получил товар ${group}, репутация магазина снижена! Штраф: $${p.toFixed(2)}`);
 
