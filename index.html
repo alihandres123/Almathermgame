@@ -322,15 +322,15 @@ function storageFee() {
   let fee = 0;
   for (const group in stock) {
     const qty = stock[group];
-    if (qty <= 40) fee += qty * 0.3;         // было 0.4
-else if (qty <= 80) fee += qty * 0.75;   // было 1.0
-else fee += qty * 1.3;                   // было 1.8
+    if (qty <= 40) fee += qty * 0.9;
+else if (qty <= 80) fee += qty * 2.25;
+else fee += qty * 3.9;
 
-    if (qty > 70) {
-      const over = qty - 70;
-      const fine = over * 1.5;
-      log(`⚠️ Переполнение ${group}: $${fine.toFixed(2)}`);
-      fee += fine;
+if (qty > 70) {
+  const over = qty - 70;
+  const fine = over * 4.5;
+  log(`⚠️ Переполнение ${group}: $${fine.toFixed(2)}`);
+  fee += fine;
     }
   }
   return fee;
