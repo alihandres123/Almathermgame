@@ -254,7 +254,7 @@ totalDemand += demand;
 totalSoldUnits += sold;
     const shortage = demand - sold;
     if (shortage > 0) {
-      const p = Math.pow(shortage, 1.7);  // прогрессивный штраф
+      const p = shortage * 3.5;  // фиксированный штраф $3 за каждую недопоставленную единицу
 penaltyTotal += p;
 log(`❗ Клиент не получил товар ${group}, репутация магазина снижена! Штраф: $${p.toFixed(2)}`);
 
@@ -327,8 +327,8 @@ function storageFee() {
 else if (qty <= 80) fee += qty * 1.0;
 else fee += qty * 2.5;
 
-if (qty > 70) {
-  const over = qty - 70;
+if (qty > 80) {
+  const over = qty - 80;
   const fine = over * 4.5;
   log(`⚠️ Переполнение ${group}: $${fine.toFixed(2)}`);
   fee += fine;
