@@ -169,12 +169,20 @@ const gameChart = new Chart(chartCtx, {
 });
 
 const demandModel = {
-  A: Array.from({ length: 30 }, (_, i) => Math.random() < 0.1 ? Math.floor(Math.random() * 11 + 30) : Math.max(0, Math.floor(16 + Math.sin(i / 2.5) * 4 + (Math.random() - 0.5) * 8))),
-  B: Array.from({ length: 30 }, (_, i) => Math.random() < 0.1 ? Math.floor(Math.random() * 11 + 35) : Math.max(0, Math.floor(16 + Math.sin(i / 4) * 7 + (Math.random() - 0.5) * 12))),
+  A: Array.from({ length: 30 }, (_, i) =>
+    Math.random() < 0.1
+      ? Math.floor(Math.random() * 5 + 12)  // всплески
+      : Math.max(0, Math.floor(9 + Math.sin(i / 3) * 3 + (Math.random() - 0.5) * 4))
+  ),
+  B: Array.from({ length: 30 }, (_, i) =>
+    Math.random() < 0.1
+      ? Math.floor(Math.random() * 6 + 14)
+      : Math.max(0, Math.floor(10 + Math.sin(i / 4) * 4 + (Math.random() - 0.5) * 6))
+  ),
   C: Array.from({ length: 30 }, () => 0)
 };
-[2, 6, 11, 16, 20, 25, 28].forEach(d => demandModel.C[d] = Math.floor(Math.random() * 36 + 25));
-demandModel.C[Math.floor(Math.random() * 30)] = Math.floor(Math.random() * 21 + 70);
+[3, 9, 14, 20, 24, 27, 29].forEach(d => demandModel.C[d] = Math.floor(Math.random() * 25 + 20));
+demandModel.C[Math.floor(Math.random() * 30)] = Math.floor(Math.random() * 41 + 60);
 
 const shortages = { A: 0, B: 0, C: 0 };
 const penaltyTimers = { A: 0, B: 0, C: 0 };
@@ -275,7 +283,7 @@ log(`❗ Клиент не получил товар ${group}, репутаци�
     log(`🛒 ${group}: спрос ${demand}, продано ${sold}, дефицит ${shortage}`);
   });
 
-  const revenue = soldA * 4.5 + soldB * 5.5 + soldC * 7;
+  const revenue = soldA * 6 + soldB * 7.5 + soldC * 10;
   totalRevenue += revenue;
   const hold = (day % 3 === 0) ? storageFee() : 0;
   budget += revenue - hold - salary - rent - penaltyTotal;
