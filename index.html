@@ -323,9 +323,9 @@ function storageFee() {
   let fee = 0;
   for (const group in stock) {
     const qty = stock[group];
-    if (qty <= 40) fee += qty * 0.9;
-else if (qty <= 80) fee += qty * 2.25;
-else fee += qty * 3.9;
+    if (qty <= 40) fee += qty * 0.4;
+else if (qty <= 80) fee += qty * 1.0;
+else fee += qty * 2.5;
 
 if (qty > 70) {
   const over = qty - 70;
