@@ -252,7 +252,7 @@ activeDeliveries = activeDeliveries.filter(d => d.days > 0);
   });
 
   const revenue = soldA * 4.5 + soldB * 5.5 + soldC * 7;
-  const hold = (day % 3 === 0) ? storageFee() : 0;
+  const hold = (day % 2 === 0) ? storageFee() : 0;
   budget += revenue - hold - salary - rent - penaltyTotal;
   totalCost += hold + salary + rent + penaltyTotal;
 
